@@ -28,6 +28,26 @@ class UserRepository {
     }
   }
 
+  async findByUsernameAndPassword(
+    username: string,
+    password: string
+  ): Promise<User | null> {
+    try {
+      const sqlQuery = `SELECT uuid, username FROM application_user 
+      WHERE username = $1 AND password = crypt($2, 'my_salt')`;
+
+      const values = [username, password];
+
+      const { rows } = await db.query<User>(sqlQuery, values);
+
+      const [user] = rows;
+
+      return user || null;
+    } catch (error) {
+      throw new DatabaseError("Erro na consulta por Usuário e Senha", error);
+    }
+  }
+
   async createUser(user: User): Promise<string> {
     const sqlQuery = `
       INSERT INTO application_user (username, password) VALUES ($1, crypt($2, 'my_salt')) RETURNING uuid
